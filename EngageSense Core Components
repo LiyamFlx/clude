@@ -1,0 +1,173 @@
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Card } from '@/components/ui/card';
+import { AlertCircle, TrendingUp, Users, Music } from 'lucide-react';
+
+// Types for our application
+interface EngagementData {
+  timestamp: number;
+  density: number;
+  sentiment: number;
+  energyLevel: number;
+}
+
+interface PredictionData {
+  time: string;
+  predictedAttendance: number;
+  actualAttendance: number;
+  predictedEngagement: number;
+}
+
+interface HeatmapData {
+  x: number;
+  y: number;
+  value: number;
+}
+
+const EngageSenseMain = () => {
+  const [engagementData, setEngagementData] = useState<EngagementData[]>([]);
+  const [predictions, setPredictions] = useState<PredictionData[]>([]);
+  const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
+
+  useEffect(() => {
+    // Simulate real-time data updates
+    const interval = setInterval(() => {
+      // In production, this would be replaced with actual WebSocket data
+      updateEngagementData();
+      updateHeatmapData();
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const updateEngagementData = () => {
+    // Simulate new engagement data
+    const newData: EngagementData = {
+      timestamp: Date.now(),
+      density: Math.random() * 100,
+      sentiment: Math.random() * 10,
+      energyLevel: Math.random() * 100
+    };
+
+    setEngagementData(prev => [...prev.slice(-20), newData]);
+  };
+
+  const updateHeatmapData = () => {
+    // Simulate heatmap data updates
+    const newHeatmapData: HeatmapData[] = Array.from({ length: 100 }, (_, i) => ({
+      x: i % 10,
+      y: Math.floor(i / 10),
+      value: Math.random()
+    }));
+
+    setHeatmapData(newHeatmapData);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">EngageSense Dashboard</h1>
+          <div className="flex space-x-4">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+              Start Event
+            </button>
+          </div>
+        </div>
+
+        {/* Metrics Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            title="Current Attendance"
+            value="487"
+            change="+12%"
+            icon={<Users className="w-6 h-6" />}
+          />
+          <MetricCard
+            title="Crowd Density"
+            value="78%"
+            change="+5%"
+            icon={<AlertCircle className="w-6 h-6" />}
+          />
+          <MetricCard
+            title="Energy Level"
+            value="8.4/10"
+            change="+2%"
+            icon={<TrendingUp className="w-6 h-6" />}
+          />
+          <MetricCard
+            title="Suggested BPM"
+            value="128"
+            change="stable"
+            icon={<Music className="w-6 h-6" />}
+          />
+        </div>
+
+        {/* Real-time Engagement Chart */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Real-time Engagement Trends</h2>
+          <LineChart width={800} height={300} data={engagementData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="timestamp" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="density" stroke="#8884d8" />
+            <Line type="monotone" dataKey="sentiment" stroke="#82ca9d" />
+            <Line type="monotone" dataKey="energyLevel" stroke="#ffc658" />
+          </LineChart>
+        </Card>
+
+        {/* Heatmap Visualization */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Crowd Density Heatmap</h2>
+          <div className="grid grid-cols-10 gap-1">
+            {heatmapData.map((cell, index) => (
+              <div
+                key={index}
+                className="aspect-square rounded"
+                style={{
+                  backgroundColor: `rgba(59, 130, 246, ${cell.value})`,
+                }}
+              />
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+// Metric Card Component
+interface MetricCardProps {
+  title: string;
+  value: string;
+  change: string;
+  icon: React.ReactNode;
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({ title, value, change, icon }) => {
+  const isPositive = change.startsWith('+');
+  
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="bg-blue-100 p-3 rounded-lg">
+            {icon}
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">{title}</p>
+            <p className="text-2xl font-semibold">{value}</p>
+          </div>
+        </div>
+        <div className={`text-sm ${isPositive ? 'text-green-500' : 'text-gray-500'}`}>
+          {change}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+export default EngageSenseMain;
