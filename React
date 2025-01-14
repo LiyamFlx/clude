@@ -1,0 +1,180 @@
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Card } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Brain, TrendingUp, AlertCircle } from 'lucide-react';
+
+// Types for our prediction system
+interface EngagementMetrics {
+  timestamp: number;
+  physicalEngagement: number;
+  emotionalEngagement: number;
+  mentalEngagement: number;
+  spiritualEngagement: number;
+}
+
+interface PredictionResult {
+  predictedValue: number;
+  confidence: number;
+  recommendation: string;
+  trend: 'up' | 'down' | 'stable';
+}
+
+interface EngagementPrediction {
+  current: EngagementMetrics;
+  predicted: PredictionResult;
+  timeframe: string;
+}
+
+const EngagementPredictionSystem = () => {
+  const [predictions, setPredictions] = useState<EngagementPrediction[]>([]);
+  const [currentMetrics, setCurrentMetrics] = useState<EngagementMetrics | null>(null);
+
+  // Simulate AI prediction calculation
+  const calculatePrediction = (metrics: EngagementMetrics): PredictionResult => {
+    const weightedSum = 
+      (metrics.physicalEngagement * 0.3) +
+      (metrics.emotionalEngagement * 0.3) +
+      (metrics.mentalEngagement * 0.2) +
+      (metrics.spiritualEngagement * 0.2);
+    
+    return {
+      predictedValue: weightedSum,
+      confidence: 85 + (Math.random() * 10),
+      recommendation: weightedSum < 7 ? "Consider increasing BPM and energy" : "Maintain current energy levels",
+      trend: weightedSum > 7 ? 'up' : weightedSum < 5 ? 'down' : 'stable'
+    };
+  };
+
+  useEffect(() => {
+    // Simulate real-time data updates
+    const interval = setInterval(() => {
+      const newMetrics: EngagementMetrics = {
+        timestamp: Date.now(),
+        physicalEngagement: Math.random() * 10,
+        emotionalEngagement: Math.random() * 10,
+        mentalEngagement: Math.random() * 10,
+        spiritualEngagement: Math.random() * 10
+      };
+
+      setCurrentMetrics(newMetrics);
+      
+      const prediction = calculatePrediction(newMetrics);
+      setPredictions(prev => [...prev.slice(-20), {
+        current: newMetrics,
+        predicted: prediction,
+        timeframe: new Date().toLocaleTimeString()
+      }]);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const getRecommendationSeverity = (confidence: number) => {
+    if (confidence >= 90) return 'bg-green-100 text-green-800';
+    if (confidence >= 70) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Current Engagement */}
+        <Card className="p-4">
+          <div className="flex items-center space-x-2">
+            <Brain className="w-5 h-5 text-blue-500" />
+            <h3 className="text-lg font-semibold">Current Engagement</h3>
+          </div>
+          {currentMetrics && (
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between">
+                <span>Physical</span>
+                <span className="font-medium">{currentMetrics.physicalEngagement.toFixed(1)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Emotional</span>
+                <span className="font-medium">{currentMetrics.emotionalEngagement.toFixed(1)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Mental</span>
+                <span className="font-medium">{currentMetrics.mentalEngagement.toFixed(1)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Spiritual</span>
+                <span className="font-medium">{currentMetrics.spiritualEngagement.toFixed(1)}</span>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* Prediction Confidence */}
+        <Card className="p-4">
+          <div className="flex items-center space-x-2">
+            <TrendingUp className="w-5 h-5 text-blue-500" />
+            <h3 className="text-lg font-semibold">Prediction Confidence</h3>
+          </div>
+          {predictions.length > 0 && (
+            <div className="mt-4">
+              <div className="text-3xl font-bold text-center">
+                {predictions[predictions.length - 1].predicted.confidence.toFixed(1)}%
+              </div>
+              <div className="mt-4">
+                <div className="h-2 bg-gray-200 rounded-full">
+                  <div 
+                    className="h-2 bg-blue-500 rounded-full transition-all duration-500"
+                    style={{ width: `${predictions[predictions.length - 1].predicted.confidence}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* AI Recommendations */}
+        <Card className="p-4">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5 text-blue-500" />
+            <h3 className="text-lg font-semibold">AI Recommendations</h3>
+          </div>
+          {predictions.length > 0 && (
+            <Alert className={`mt-4 ${getRecommendationSeverity(predictions[predictions.length - 1].predicted.confidence)}`}>
+              <AlertTitle>Recommendation</AlertTitle>
+              <AlertDescription>
+                {predictions[predictions.length - 1].predicted.recommendation}
+              </AlertDescription>
+            </Alert>
+          )}
+        </Card>
+      </div>
+
+      {/* Prediction Trends Chart */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Engagement Prediction Trends</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={predictions}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="timeframe" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line 
+              type="monotone" 
+              dataKey="current.physicalEngagement" 
+              name="Current Physical" 
+              stroke="#8884d8" 
+            />
+            <Line 
+              type="monotone" 
+              dataKey="predicted.predictedValue" 
+              name="Predicted" 
+              stroke="#82ca9d" 
+              strokeDasharray="5 5"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+    </div>
+  );
+};
+
+export default EngagementPredictionSystem;
